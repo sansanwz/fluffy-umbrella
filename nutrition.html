@@ -2,44 +2,94 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>热量计算器（带历史记录）</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
         body {
             font-family: "Microsoft Yahei", sans-serif;
-            max-width: 600px;
-            margin: 30px auto;
+            background: linear-gradient(135deg, #f0f7ff, #e8f0fe);
+            max-width: 620px;
+            margin: 40px auto;
             padding: 0 20px;
         }
         .box {
-            border: 1px solid #ccc;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom:20px;
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 4px 16px rgba(43, 124, 218, 0.12);
+            padding: 28px;
+            margin-bottom: 24px;
+        }
+        h2, h3 {
+            color: #223344;
+            margin-bottom: 18px;
         }
         input {
             width: 100%;
-            box-sizing: border-box;
-            padding:8px;
-            margin:6px 0;
+            padding:12px 14px;
+            margin:8px 0;
             font-size:16px;
+            border: 1px solid #d8e2ef;
+            border-radius:10px;
+            transition: 0.25s;
+        }
+        input:focus {
+            outline: none;
+            border-color:#2b7cda;
+            box-shadow: 0 0 0 3px rgba(43, 124, 218, 0.15);
         }
         button {
-            padding: 9px 16px;
-            margin:4px;
+            padding: 11px 20px;
+            margin:6px 4px;
             cursor:pointer;
             font-size:15px;
+            border: none;
+            border-radius:10px;
+            background-color:#2b7cda;
+            color:#fff;
+            transition:0.2s;
+        }
+        button:hover {
+            background-color:#1f68bc;
+            transform: translateY(-2px);
+        }
+        button:active {
+            transform: translateY(0px);
         }
         .result {
             color:#2b7cda;
-            font-size:18px;
+            font-size:19px;
             font-weight:bold;
+            margin-top:12px;
         }
         .history-item{
-            padding:8px;
-            border-bottom:1px solid #eee;
+            padding:12px 8px;
+            border-bottom:1px solid #f0f4f8;
             display:flex;
             justify-content:space-between;
             align-items:center;
+            transition: 0.2s;
+        }
+        .history-item:hover {
+            background-color:#f7faff;
+        }
+        .history-item button {
+            background:#e74c3c;
+            padding:6px 10px;
+            font-size:14px;
+        }
+        .history-item button:hover {
+            background:#c0392b;
+        }
+        .clear-btn {
+            background:#6c757d;
+        }
+        .clear-btn:hover {
+            background:#4e565c;
         }
     </style>
 </head>
@@ -54,35 +104,29 @@
         <button onclick="calc()">计算</button>
         <div class="result" id="resultText"></div>
     </div>
-
     <div class="box">
         <h3>📜 计算历史</h3>
         <div id="historyList"></div>
-        <button onclick="clearAllHistory()">清空全部历史</button>
+        <button class="clear-btn" onclick="clearAllHistory()">清空全部历史</button>
     </div>
-
 <script>
     // 页面加载时读取本地存储，渲染历史记录
     let historyData = JSON.parse(localStorage.getItem("foodHistory")) || [];
     renderHistory();
-
     // 计算函数
     function calc(){
         const name = document.getElementById("foodName").value;
         const weight = Number(document.getElementById("weight").value);
         const cal100 = Number(document.getElementById("calPer100").value);
         const pro100 = Number(document.getElementById("proteinPer100").value);
-
         if(!name || weight <=0 || cal100 <0 || pro100 <0){
             alert("请填写有效的食物信息！");
             return;
         }
-
         const totalCal = weight / 100 * cal100;
         const totalPro = weight / 100 * pro100;
         const resText = `${name}：总热量 ${totalCal.toFixed(1)} kcal，蛋白质 ${totalPro.toFixed(1)} g`;
         document.getElementById("resultText").innerText = resText;
-
         // 存入历史记录
         const record = {
             name: name,
@@ -94,8 +138,16 @@
         historyData.push(record);
         localStorage.setItem("foodHistory", JSON.stringify(historyData));
         renderHistory();
-    }
 
+        // 修复：计算完成自动清空输入框
+        document.getElementById("foodName").value = "";
+        document.getElementById("weight").value = "";
+        document.getElementById("calPer100").value = "";
+        document.getElementById("proteinPer100").value = "";
+
+        // 清除本次计算结果文字，不再保留上次计算提示
+        document.getElementById("resultText").innerText = "";
+    }
     // 渲染历史列表
     function renderHistory(){
         const dom = document.getElementById("historyList");
@@ -109,14 +161,12 @@
             `
         })
     }
-
     // 删除单条记录
     function delRecord(idx){
         historyData.splice(idx, 1);
         localStorage.setItem("foodHistory", JSON.stringify(historyData));
         renderHistory();
     }
-
     // 清空全部
     function clearAllHistory(){
         if(confirm("确定清空所有历史记录？")){
