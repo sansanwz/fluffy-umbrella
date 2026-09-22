@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>热量计算器（带历史记录）</title>
+    <style>
+        body {
+            font-family: "Microsoft Yahei", sans-serif;
+            max-width: 600px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        .box {
+            border: 1px solid #ccc;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom:20px;
+        }
+        input {
+            width: 100%;
+            box-sizing: border-box;
+            padding:8px;
+            margin:6px 0;
+            font-size:16px;
+        }
+        button {
+            padding: 9px 16px;
+            margin:4px;
+            cursor:pointer;
+            font-size:15px;
+        }
+        .result {
+            color:#2b7cda;
+            font-size:18px;
+            font-weight:bold;
+        }
+        .history-item{
+            padding:8px;
+            border-bottom:1px solid #eee;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+        }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h2>热量计算器</h2>
+        <input type="text" id="foodName" placeholder="食物名称">
+        <input type="number" id="weight" placeholder="重量(g)" min="0">
+        <input type="number" id="calPer100" placeholder="每100g热量(kcal)" min="0">
+        <input type="number" id="proteinPer100" placeholder="每100g蛋白质(g)" min="0">
+        <br>
+        <button onclick="calc()">计算</button>
+        <div class="result" id="resultText"></div>
+    </div>
+
+    <div class="box">
+        <h3>📜 计算历史</h3>
+        <div id="historyList"></div>
+        <button onclick="clearAllHistory()">清空全部历史</button>
+    </div>
+
+<script>
+    // 页面加载时读取本地存储，渲染历史记录
+    let historyData = JSON.parse(localStorage.getItem("foodHistory")) || [];
+    renderHistory();
+
+    // 计算函数
+    function calc(){
+        const name = document.getElementById("foodName").value;
+        const weight = Number(document.getElementById("weight").value);
+        const cal100 = Number(document.getElementById("calPer100").value);
+        const pro100 = Number(document.getElementById("proteinPer100").value);
+
+        if(!name || weight <=0 || cal100 <0 || pro100 <0){
+            alert("请填写有效的食物信息！");
+            return;
+        }
+
+        const totalCal = weight / 100 * cal100;
+        const totalPro = weight / 100 * pro100;
+        const resText = `${name}：总热量 ${totalCal.toFixed(1)} kcal，蛋白质 ${totalPro.toFixed(1)} g`;
+        document.getElementById("resultText").innerText = resText;
+
+        // 存入历史记录
+        const record = {
+            name: name,
+            weight: weight,
+            cal: totalCal.toFixed(1),
+            pro: totalPro.toFixed(1),
+            time: new Date().toLocaleString()
+        };
+        historyData.push(record);
+        localStorage.setItem("foodHistory", JSON.stringify(historyData));
+        renderHistory();
+    }
+
+    // 渲染历史列表
+    function renderHistory(){
+        const dom = document.getElementById("historyList");
+        dom.innerHTML = "";
+        historyData.forEach((item, index)=>{
+            dom.innerHTML += `
+                <div class="history-item">
+                    <span>${item.time} | ${item.name} | ${item.cal} kcal | ${item.pro} g</span>
+                    <button onclick="delRecord(${index})">删除</button>
+                </div>
+            `
+        })
+    }
+
+    // 删除单条记录
+    function delRecord(idx){
+        historyData.splice(idx, 1);
+        localStorage.setItem("foodHistory", JSON.stringify(historyData));
+        renderHistory();
+    }
+
+    // 清空全部
+    function clearAllHistory(){
+        if(confirm("确定清空所有历史记录？")){
+            historyData = [];
+            localStorage.removeItem("foodHistory");
+            renderHistory();
+        }
+    }
+</script>
+</body>
+</html>
